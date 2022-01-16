@@ -15,5 +15,5 @@ You can install the development version of multisplit runing this code:
 
 ``` r
 if(!require(remotes)){install.packages("remotes")}
-remotes::install_github("franfrutos/multisplit")
+remotes::install_github("franfrutos/multi.s")
 ```
