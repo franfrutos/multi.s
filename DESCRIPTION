@@ -1,0 +1,18 @@
+Package: multi.s
+Type: Package
+Title: Calculate split-half reliability for multiverse analisys
+Version: 0.1.0
+Author: person("Francisco", "Garre Frutos", email = "fgfrutos@ugr.es",
+                  role = c("aut", "cre"))
+Maintainer: <fgfrutos@ugr.es>
+Description: Initialy, the package allows computing split-half reliability indexes
+    ussing a permutation aproach for the difference in outcome. The type of split-half 
+    analisys will increase in future updates. Furthermore, in the future, multiverse 
+    analisys will be suppported with a bunch of utils for visualization and communication.
+Encoding: UTF-8
+LazyData: true
+License: GPL (>= 2)
+Depends: R (>= 3.3),
+Imports: Rcpp, tidyr, dplyr, plyr, stats, robustbase
+LinkingTo: Rcpp
+RoxygenNote: 7.1.2
