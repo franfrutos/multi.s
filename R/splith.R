@@ -325,7 +325,7 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
     )
   round.to = 2
   out2 <- out %>%
-    group_by(Condition) %>%
+    dplyr::group_by(Condition) %>%
     dplyr::summarise(
       n = mean(n),
       splithalf_estimate = round(mean(splithalf), round.to),
