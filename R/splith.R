@@ -312,7 +312,7 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
   findata2$Iteration <- as.factor(findata2$Iteration)
 
   out <- findata2 %>%
-    dplyr::group_by(Iteration) %>%
+    dplyr::group_by(Condition, Iteration) %>%
     dplyr::summarise(
       n = round(sum(!is.na(bias1)), 2),
       splithalf = cor(bias1, bias2, use = "pairwise.complete"),
@@ -325,6 +325,7 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
     )
   round.to = 2
   out2 <- out %>%
+    group_by(Condition) %>%
     dplyr::summarise(
       n = mean(n),
       splithalf_estimate = round(mean(splithalf), round.to),
@@ -362,7 +363,7 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
 
   print(paste("this could be reported as: ",
               "using ", output$call$Permutations, " random splits, the spearman-brown corrected reliability  estimate for the ",
-              out2[1,"condition"],
+              out2[1,"Condition"],
               " condition was ", out2[1,"spearmanbrown"],
               ", 95% CI [", out2[1,"SB_low"], ", ",
               out2[1,"SB_high"], "]", sep = ""))
