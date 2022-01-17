@@ -38,13 +38,18 @@
 #' @export
 #'
 splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
-                   variable = NULL,condition = NULL, subject = "subject", include_block = FALSE,
+                   variable = NULL, condition = NULL, subject = "subject", include_block = FALSE,
                    block = NULL, return_iterations = FALSE) {
 
-  # set data to data frame
+
+  if (is.data.frame(data) == FALSE) {
+    stop(paste0("you have to provide a data frame, not a", typeof(data)))
+  }
+
+  # set data to data frame for avoidding tibble issues:
   data <- as.data.frame(data)
 
-  #save function settings
+  #save function settings:
   call = list(Permutations = permutations,
               outcome = outcome,
               average = average,
@@ -85,17 +90,31 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
   #create a vector with variables
   if (is.null(variable)){
     stop("A variable's name is needed")
-  } else {
+  } else if (length(unique(variable) != 2)){
+    stop("your variable needs tow values to be compared")
+  } {
     vlist <- sort(unique(data[, variable]))
   }
 
+   # function to detect if a vector is binary (used for automaticly check if outcome is RT or ACC type)
+  is.binary = function(v, naVal="NA") {
+    if (!is.numeric(v)) stop("Only numeric vectors are accepted.")
+    vSet = unique(v)
+    if (!missing(naVal)) vSet[vSet == naVal] = NA
+    vSet = vSet[!is.na(vSet)]
+
+    !(any(as.integer(vSet) != vSet) || length(vSet) > 2)
+  }
+
+
   # checks whether user difference score is based on means or medians
-  if (average == "mean") {
-    ave_fun <- function(val) {
-      colMeans(val)
+  if (!is.binary(data[, outcome])){
+    if (average == "mean") {
+      ave_fun <- function(val) {
+        colMeans(val)
       }
-    ave_fun_basic <- function(val) {
-      mean(val)
+      ave_fun_basic <- function(val) {
+        mean(val)
       }
     } else if (average == "median") {
       ave_fun <- function(val) {
@@ -105,6 +124,9 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
         median(val)
       }
     }
+  } else {
+    stop("You need to provide RT data")
+  }
 
   # create the data.frame to populate
   findata <-
