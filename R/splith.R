@@ -90,7 +90,7 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
   #create a vector with variables
   if (is.null(variable)){
     stop("A variable's name is needed")
-  } else if (length(unique(variable) != 2)){
+  } else if (length(unique(variable)) != 2){
     stop("your variable needs tow values to be compared")
   } else {
     vlist <- sort(unique(data[, variable]))
