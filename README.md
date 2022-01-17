@@ -13,7 +13,7 @@ github repository: <https://github.com/sdparsons/splithalf>.
 Now, the package only have a function to compute the split-half of the
 difference in RT data. This function is expected to be improved with
 more possibilities: analysis of accuracy, apply specifications on raw
-data before computing split-half, and tools for visualize and report
+data before computing split-half, tools for visualize and report
 results, and, of course, speeded multiverse analisys.
 
 ## Installation
