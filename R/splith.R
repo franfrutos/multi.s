@@ -217,24 +217,6 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
         tempim.1 <- do.call(rbind, tempim.1)
         tempim.2 <- do.call(rbind, tempim.2)
 
-        #if(nrow(tempcm.1) != nrow(tempcm.2)) {
-
-        #totalcm <- rbind(tempcm.1, tempcm.2)
-        #midtrial.con <- nrow(!is.na(totalcm))/2
-
-        #tempcm.1 <- totalcm[1:floor(midtrial.con), ]
-        #tempcm.2 <- totalcm[(floor(midtrial.con) + 1):nrow(totalcm), ]
-        #}
-
-        #if(nrow(tempim.1) != nrow(tempim.2)) {
-
-        #totalim <- rbind(tempim.1, tempim.2)
-        #midtrial.incon <- nrow(!is.na(totalim))/2
-
-        #tempim.1 <- totalim[1:floor(midtrial.incon), ]
-        #tempim.2 <- totalim[(floor(midtrial.incon) + 1):nrow(totalim), ]
-        #}
-
 
       } else if (include_block != TRUE){
 
@@ -347,7 +329,7 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
     as.data.frame()
 
   colnames(out2) <- c(
-    "Condition", 
+    "Condition",
     "n",
     "splithalf",
     "95_low",
