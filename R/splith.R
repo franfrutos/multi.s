@@ -176,34 +176,40 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
             subset(data[, outcome],
                    data[, subject] == i &
                      data[, block] == k &
+                     data[, condition] == j &
                      data[, variable] == vlist[1])
+
+          if (length(tempcvb) != 0){
+            midtrial.con <- sum(!is.na(tempcvb)) / 2
+
+            tempcm <- samploop(a = matrix(nrow = length(tempcvb), ncol = permutations, 0),
+                               b = tempcvb,
+                               c = permutations)
+
+
+            tempcm.1[[k]] <- tempcm[1:floor(midtrial.con), ]
+            tempcm.2[[k]] <- tempcm[(floor(midtrial.con) + 1):length(tempcvb), ]
+          }
 
 
           tempivb   <-
             subset(data[, outcome],
                    data[, subject] == i &
                      data[, block] == k &
+                     data[, condition] == j &
                      data[, variable] == vlist[2])
 
-          midtrial.con <- sum(!is.na(tempcvb)) / 2
-          midtrial.incon <- sum(!is.na(tempivb)) / 2
+          if (length(tempivb) != 0){
+            midtrial.incon <- sum(!is.na(tempivb)) / 2
 
-          tempcm <- samploop(a = matrix(nrow = length(tempcvb), ncol = permutations, 0),
-                             b = tempcvb,
-                             c = permutations)
+            tempim <- samploop(a = matrix(nrow = length(tempivb), ncol = permutations, 0),
+                               b = tempivb,
+                               c = permutations)
 
+            tempim.1[[k]] <- tempim[1:floor(midtrial.incon), ]
+            tempim.2[[k]] <- tempim[(floor(midtrial.incon) + 1):length(tempivb), ]
 
-          tempcm.1[[k]] <- tempcm[1:floor(midtrial.con), ]
-          tempcm.2[[k]] <- tempcm[(floor(midtrial.con) + 1):length(tempcvb), ]
-
-
-          tempim <- samploop(a = matrix(nrow = length(tempivb), ncol = permutations, 0),
-                             b = tempivb,
-                             c = permutations)
-
-          tempim.1[[k]] <- tempim[1:floor(midtrial.incon), ]
-          tempim.2[[k]] <- tempim[(floor(midtrial.incon) + 1):length(tempivb), ]
-
+          }
         }
 
         tempcm.1 <- do.call(rbind, tempcm.1)
@@ -236,12 +242,14 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
         tempcv   <-
           subset(data[, outcome],
                  data[, subject] == i &
+                   data[, condition] == j &
                    data[, variable] == vlist[1])
 
 
         tempiv   <-
           subset(data[, outcome],
                  data[, subject] == i &
+                   data[, condition] == j &
                    data[, variable] == vlist[2])
 
 
@@ -327,6 +335,7 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
   out2 <- out %>%
     dplyr::group_by(Condition) %>%
     dplyr::summarise(
+      Condition = Condition,
       n = mean(n),
       splithalf_estimate = round(mean(splithalf), round.to),
       splithalf95CI_lower = round(quantile(splithalf, c(.025), names = F), round.to),
