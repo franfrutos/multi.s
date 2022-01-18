@@ -335,7 +335,7 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
   out2 <- out %>%
     dplyr::group_by(Condition) %>%
     dplyr::summarise(
-      Condition = Condition,
+      Condition = unique(Condition),
       n = mean(n),
       splithalf_estimate = round(mean(splithalf), round.to),
       splithalf95CI_lower = round(quantile(splithalf, c(.025), names = F), round.to),
@@ -370,12 +370,6 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
 
   output$final_estimates <- out2
 
-  print(paste("this could be reported as: ",
-              "using ", output$call$Permutations, " random splits, the spearman-brown corrected reliability  estimate for the ",
-              out2[1,"Condition"],
-              " condition was ", out2[1,"spearmanbrown"],
-              ", 95% CI [", out2[1,"SB_low"], ", ",
-              out2[1,"SB_high"], "]", sep = ""))
 
   return(output)
 }
