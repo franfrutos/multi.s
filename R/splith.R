@@ -347,6 +347,7 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
     as.data.frame()
 
   colnames(out2) <- c(
+    "Condition", 
     "n",
     "splithalf",
     "95_low",
