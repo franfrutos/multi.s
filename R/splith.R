@@ -91,9 +91,11 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
   if (is.null(variable)){
     stop("A variable's name is needed")
   } else if (length(unique(data[, variable])) != 2){
-    stop("your variable needs tow values to be compared")
+    stop("your variable needs two values to be compared")
   } else {
-    vlist <- sort(unique(data[, variable]))
+    vlist <- data %>%
+      pull(as.symbol(variable))%>% #avoid problems related to non-vectors
+        sort(unique(data[, variable]))
   }
 
    # function to detect if a vector is binary (used for automaticly check if outcome is RT or ACC type)
