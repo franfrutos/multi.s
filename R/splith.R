@@ -76,6 +76,8 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
     clist <- unique(data[, condition])
   } else {
     clist <- 1
+    condition <- "condition"
+    data$condition <- rep(1, each = nrow(data))
   }
 
   #create a vector for Blocks
