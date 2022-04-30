@@ -113,14 +113,20 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
   if (!is.binary(data[, outcome])){
     if (average == "mean") {
       ave_fun <- function(val) {
-        colMeans(val)
+        tryCatch(
+          error = function(err) NaN,
+          colMeans(val)
+        )
       }
       ave_fun_basic <- function(val) {
         mean(val)
       }
     } else if (average == "median") {
       ave_fun <- function(val) {
-        robustbase::colMedians(val)
+        tryCatch(
+          error = function(err) NaN,
+          robustbase::colMedians(val)
+        )
       }
       ave_fun_basic <- function(val) {
         median(val)
@@ -353,7 +359,7 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
   }
 
   output$final_estimates <- out2
-  
+
   return(output)
 }
 
