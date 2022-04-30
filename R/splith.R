@@ -294,7 +294,7 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
     print("the following are participants/conditions with missing data")
     omitted <- findata[!complete.cases(findata),]
     output$omitted <- omitted
-    print(unique(omitted[c("condition", "participant")]))
+    print(unique(omitted[c("Condition", "Participant")]))
     print(
       "note: these iterations will be removed from the split half
             reliability calculations, in that condition"
