@@ -128,6 +128,8 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
           robustbase::colMedians(val)
         )
       }
+      a <- dplyr::tibble(col1 = c(1:5),
+                  col2 = c(1:5))
       ave_fun_basic <- function(val) {
         median(val)
       }
