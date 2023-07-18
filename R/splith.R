@@ -8,6 +8,8 @@
 #'
 #' @param average The type of averaging that you want to apply for computing split-half. The default is "mean".
 #'
+#' @param q Quantile to apply if mean or median is not used as averaging method. Default is .80.
+#'
 #' @param permutations Number of times that you want to compute the split-half. Default is 10, but more is recommended.
 #'
 #' @param variable Name of the variable to be analyzed in strings (e.g. "Congruency"). Default is set to NULL, and is required to be filled.
@@ -27,8 +29,10 @@
 #' @import tidyr
 #' @import Rcpp
 #' @import grid
+#' @import ggplot2
 #' @importFrom stats complete.cases cor median na.omit quantile sd
 #' @importFrom robustbase colMedians
+#' @importFrom matrixStats colQuantiles
 #' @importFrom dplyr select summarise group_by mutate n_distinct
 #' @importFrom plyr arrange
 #' @useDynLib multi.s, .registration = TRUE
@@ -37,7 +41,7 @@
 #'
 #' @export
 #'
-splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
+splith <- function(data, outcome = "RT", average = "mean",q = .80, permutations = 10,
                    variable = NULL, condition = NULL, subject = "subject", include_block = FALSE,
                    block = NULL, return_iterations = FALSE) {
 
@@ -81,7 +85,7 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
   }
 
   #create a vector for Blocks
-  if (include_block == TRUE){
+  if (include_block){
     if(is.null(block)) {
       stop("If include_block is set to TRUE, you need to provide a variable for block")
     } else {
@@ -128,10 +132,18 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
           robustbase::colMedians(val)
         )
       }
-      a <- dplyr::tibble(col1 = c(1:5),
-                  col2 = c(1:5))
       ave_fun_basic <- function(val) {
         median(val)
+      }
+    } else {
+      ave_fun <- function(val) {
+        tryCatch(
+          error = function(err) NaN,
+          matrixStats::colQuantiles(val, probs = q)
+        )
+      }
+      ave_fun_basic <- function(val, q) {
+        quantil(val, q)
       }
     }
   } else {
@@ -173,7 +185,7 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
 
     for(i in plist){
 
-      if (include_block == TRUE) {
+      if (include_block) {
 
         tempcm.1 <- list()
         tempcm.2 <- list()
@@ -228,7 +240,7 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
         tempim.2 <- do.call(rbind, tempim.2)
 
 
-      } else if (include_block != TRUE){
+      } else {
 
         #Create a vector with RT as a function of participant and variable
         tempcv   <-
@@ -237,6 +249,11 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
                    data[, condition] == j &
                    data[, variable] == vlist[1])
 
+        if(length(tempcv) == 0) {
+          print("asdh")
+          return(data[subject == i,])
+
+          }
 
         tempiv   <-
           subset(data[, outcome],
@@ -257,6 +274,9 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
                            b = tempcv,
                            c = permutations)
 
+        if (midtrial.con > nrow(tempcm)) {
+          print(nrow(tempcm), midtrial.con)
+        }
         tempcm.1 <- tempcm[1:floor(midtrial.con), ]
         tempcm.2 <- tempcm[(floor(midtrial.con) + 1):length(tempcv), ]
 
@@ -269,10 +289,18 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
 
       }
 
-      bias1v[l:(l + permutations - 1)] <-
-        ave_fun(tempcm.1)  - ave_fun(tempim.1)
-      bias2v[l:(l + permutations - 1)] <-
-        ave_fun(tempcm.2)  - ave_fun(tempim.2)
+      if (average %in% c("mean", "median")) {
+        bias1v[l:(l + permutations - 1)] <-
+          ave_fun(tempcm.1)  - ave_fun(tempim.1)
+        bias2v[l:(l + permutations - 1)] <-
+          ave_fun(tempcm.2)  - ave_fun(tempim.2)
+      } else {
+        bias1v[l:(l + permutations - 1)] <-
+          ave_fun(tempcm.1, q)  - ave_fun(tempim.1, q)
+        bias2v[l:(l + permutations - 1)] <-
+          ave_fun(tempcm.2, q)  - ave_fun(tempim.2, q)
+      }
+
 
       l <- l + permutations
       ppt <- ppt + 1
@@ -294,7 +322,7 @@ splith <- function(data, outcome = "RT", average = "mean", permutations = 10,
     print("the following are participants/conditions with missing data")
     omitted <- findata[!complete.cases(findata),]
     output$omitted <- omitted
-    print(unique(omitted[c("condition", "participant")]))
+    print(unique(omitted[c("Condition", "Participant")]))
     print(
       "note: these iterations will be removed from the split half
             reliability calculations, in that condition"
