@@ -136,7 +136,7 @@ splith <- function(data, outcome = "RT", average = "mean",q = .80, permutations 
         median(val)
       }
     } else {
-      ave_fun <- function(val) {
+      ave_fun <- function(val, q) {
         tryCatch(
           error = function(err) NaN,
           matrixStats::colQuantiles(val, probs = q)
