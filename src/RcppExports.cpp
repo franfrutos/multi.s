@@ -11,7 +11,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // samploop
-Rcpp::NumericMatrix samploop(Rcpp::NumericMatrix a, Rcpp::NumericVector b, int c);
+Rcpp::NumericMatrix samploop(Rcpp::NumericMatrix a, Rcpp::NumericVector b);
 RcppExport SEXP _multi_s_samploop(SEXP aSEXP, SEXP bSEXP, SEXP cSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -19,7 +19,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type a(aSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type b(bSEXP);
     Rcpp::traits::input_parameter< int >::type c(cSEXP);
-    rcpp_result_gen = Rcpp::wrap(samploop(a, b, c));
+    rcpp_result_gen = Rcpp::wrap(samploop(a, b));
     return rcpp_result_gen;
 END_RCPP
 }

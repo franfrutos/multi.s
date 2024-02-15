@@ -87,10 +87,14 @@ splith <- function(data, outcome = "RT", average = "mean",q = .80, permutations 
   #create a vector for Blocks
   if (include_block){
     if(is.null(block)) {
-      stop("If include_block is set to TRUE, you need to provide a variable for block")
+      warning("If include_block is set to TRUE, and no blocking variable is provided, there will be no stratifications in splits.")
     } else {
       blist <- sort(unique(data[, block]))
     }
+  } else {
+    blist <- 1
+    block <- "block"
+    data$block <- rep(1, each = nrow(data))
   }
 
   #create a vector with variables
@@ -114,7 +118,7 @@ splith <- function(data, outcome = "RT", average = "mean",q = .80, permutations 
 
 
   # checks whether user difference score is based on means or medians
-  if (!is.binary(data[, outcome])){
+  #if (!is.binary(data[, outcome])){
     if (average == "mean") {
       ave_fun <- function(val) {
         tryCatch(
@@ -146,9 +150,9 @@ splith <- function(data, outcome = "RT", average = "mean",q = .80, permutations 
         quantil(val, q)
       }
     }
-  } else {
-    stop("You need to provide RT data")
-  }
+  #} else {
+    #stop("You need to provide RT data")
+  #}
 
   # create the data.frame to populate
   findata <-
@@ -184,110 +188,55 @@ splith <- function(data, outcome = "RT", average = "mean",q = .80, permutations 
     setTxtProgressBar(pb, 0)
 
     for(i in plist){
+      tempcm.1 <- list()
+      tempcm.2 <- list()
+      tempim.1 <- list()
+      tempim.2 <- list()
 
-      if (include_block) {
+      for(k in blist){
 
-        tempcm.1 <- list()
-        tempcm.2 <- list()
-        tempim.1 <- list()
-        tempim.2 <- list()
-
-        for(k in blist){
-
-          tempcvb   <-
-            subset(data[, outcome],
-                   data[, subject] == i &
-                     data[, block] == k &
-                     data[, condition] == j &
-                     data[, variable] == vlist[1])
-
-          if (length(tempcvb) != 0){
-            midtrial.con <- sum(!is.na(tempcvb)) / 2
-
-            tempcm <- samploop(a = matrix(nrow = length(tempcvb), ncol = permutations, 0),
-                               b = tempcvb,
-                               c = permutations)
-
-
-            tempcm.1[[k]] <- tempcm[1:floor(midtrial.con), ]
-            tempcm.2[[k]] <- tempcm[(floor(midtrial.con) + 1):length(tempcvb), ]
-          }
-
-
-          tempivb   <-
-            subset(data[, outcome],
-                   data[, subject] == i &
-                     data[, block] == k &
-                     data[, condition] == j &
-                     data[, variable] == vlist[2])
-
-          if (length(tempivb) != 0){
-            midtrial.incon <- sum(!is.na(tempivb)) / 2
-
-            tempim <- samploop(a = matrix(nrow = length(tempivb), ncol = permutations, 0),
-                               b = tempivb,
-                               c = permutations)
-
-            tempim.1[[k]] <- tempim[1:floor(midtrial.incon), ]
-            tempim.2[[k]] <- tempim[(floor(midtrial.incon) + 1):length(tempivb), ]
-
-          }
-        }
-
-        tempcm.1 <- do.call(rbind, tempcm.1)
-        tempcm.2 <- do.call(rbind, tempcm.2)
-        tempim.1 <- do.call(rbind, tempim.1)
-        tempim.2 <- do.call(rbind, tempim.2)
-
-
-      } else {
-
-        #Create a vector with RT as a function of participant and variable
-        tempcv   <-
+        tempcvb <-
           subset(data[, outcome],
                  data[, subject] == i &
+                   data[, block] == k &
                    data[, condition] == j &
                    data[, variable] == vlist[1])
 
-        if(length(tempcv) == 0) {
-          print("asdh")
-          return(data[subject == i,])
+        if (length(tempcvb) != 0){
+          midtrial.con <- sum(!is.na(tempcvb)) / 2
 
-          }
+          tempcm <- samploop(a = matrix(nrow = length(tempcvb), ncol = permutations, 0),
+                             b = tempcvb)
 
-        tempiv   <-
+
+          tempcm.1[[k]] <- tempcm[1:floor(midtrial.con), ]
+          tempcm.2[[k]] <- tempcm[(floor(midtrial.con) + 1):length(tempcvb), ]
+        }
+
+
+        tempivb   <-
           subset(data[, outcome],
                  data[, subject] == i &
+                   data[, block] == k &
                    data[, condition] == j &
                    data[, variable] == vlist[2])
 
+        if (length(tempivb) != 0){
+          midtrial.incon <- sum(!is.na(tempivb)) / 2
 
-        # calculates what will be the middle numbered trial in each congruent
-        # and incongruent list
-        midtrial.con <- sum(!is.na(tempcv)) / 2
-        midtrial.incon <- sum(!is.na(tempiv)) / 2
+          tempim <- samploop(a = matrix(nrow = length(tempivb), ncol = permutations, 0),
+                             b = tempivb)
 
+          tempim.1[[k]] <- tempim[1:floor(midtrial.incon), ]
+          tempim.2[[k]] <- tempim[(floor(midtrial.incon) + 1):length(tempivb), ]
 
-        #sampling RT for n = permutations and splitting RT for each type of trial
-        #C++ function similar to replicate(permutations, sample(tempcv)), but faster
-        tempcm <- samploop(a = matrix(nrow = length(tempcv), ncol = permutations, 0),
-                           b = tempcv,
-                           c = permutations)
-
-        if (midtrial.con > nrow(tempcm)) {
-          print(nrow(tempcm), midtrial.con)
         }
-        tempcm.1 <- tempcm[1:floor(midtrial.con), ]
-        tempcm.2 <- tempcm[(floor(midtrial.con) + 1):length(tempcv), ]
-
-        tempim <- samploop(a = matrix(nrow = length(tempiv), ncol = permutations, 0),
-                           b = tempiv,
-                           c = permutations)
-
-        tempim.1 <- tempim[1:floor(midtrial.incon), ]
-        tempim.2 <- tempim[(floor(midtrial.incon) + 1):length(tempiv), ]
-
       }
+
+      tempcm.1 <- do.call(rbind, tempcm.1)
+      tempcm.2 <- do.call(rbind, tempcm.2)
+      tempim.1 <- do.call(rbind, tempim.1)
+      tempim.2 <- do.call(rbind, tempim.2)
 
       if (average %in% c("mean", "median")) {
         bias1v[l:(l + permutations - 1)] <-
@@ -386,13 +335,10 @@ splith <- function(data, outcome = "RT", average = "mean",q = .80, permutations 
 
   if (return_iterations == TRUE) {
     output$estimates <- out
+    output$raw_bias <- findata
   }
 
   output$final_estimates <- out2
 
   return(output)
 }
-
-
-
-

@@ -2,7 +2,7 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #' @export
-samploop <- function(a, b, c) {
-    .Call(`_multi_s_samploop`, a, b, c)
+samploop <- function(a, b) {
+    .Call(`_multi_s_samploop`, a, b)
 }
 
