@@ -8,6 +8,8 @@
 #'
 #' @param average The type of averaging that you want to apply for computing split-half. The default is "mean".
 #'
+#' @param type The type of score that will be applied. Default is "difference".
+#'
 #' @param q Quantile to apply if mean or median is not used as averaging method. Default is .80.
 #'
 #' @param permutations Number of times that you want to compute the split-half. Default is 10, but more is recommended.
@@ -41,7 +43,7 @@
 #'
 #' @export
 #'
-splith <- function(data, outcome = "RT", average = "mean",q = .80, permutations = 10,
+splith <- function(data, outcome = "RT", average = "mean", type = "difference", q = .80, permutations = 10,
                    variable = NULL, condition = NULL, subject = "subject", include_block = FALSE,
                    block = NULL, return_iterations = FALSE) {
 
@@ -61,7 +63,8 @@ splith <- function(data, outcome = "RT", average = "mean",q = .80, permutations 
               variable = variable,
               condition = condition,
               include_block = include_block,
-              block = block)
+              block = block,
+              return_iterations = return_iterations)
 
   #creating a list for output
   output <- list(call = call,
@@ -98,23 +101,37 @@ splith <- function(data, outcome = "RT", average = "mean",q = .80, permutations 
   }
 
   #create a vector with variables
-  if (is.null(variable)){
-    stop("A variable's name is needed")
-  } else if (length(unique(data[, variable])) != 2){
-    stop("your variable needs two values to be compared")
+  if (!is.null(variable)){
+    if (!length(unique(data[, variable])) %in% 1:2){
+      stop("your variable needs one or two values values")
+    } else if (length(unique(data[, variable])) == 2) {
+      if (type != "difference") stop('If your variable has two values, "type" must be set to difference.')
+      vlist <- sort(unique(data[, variable]))
+    } else {
+      if (type == "difference") stop('A difference cannot be computed if there is only one level in "variable".')
+      vlist <- 1
+      variable <- "variable"
+      data$variable <- rep(1, each = nrow(data))    }
   } else {
-    vlist <- sort(unique(data[, variable]))
+    if (type == "average") {
+      vlist <- 1
+      variable <- "variable"
+      data$variable <- rep(1, each = nrow(data))
+    } else {
+      stop('If you set "type" to "average", you need to select a variable with two values.')
+    }
   }
 
-   # function to detect if a vector is binary (used for automaticly check if outcome is RT or ACC type)
-  is.binary = function(v, naVal="NA") {
-    if (!is.numeric(v)) stop("Only numeric vectors are accepted.")
-    vSet = unique(v)
-    if (!missing(naVal)) vSet[vSet == naVal] = NA
-    vSet = vSet[!is.na(vSet)]
 
-    !(any(as.integer(vSet) != vSet) || length(vSet) > 2)
-  }
+  #  function to detect if a vector is binary (used for automaticly check if outcome is RT or ACC type)
+  # is.binary = function(v, naVal="NA") {
+  #   if (!is.numeric(v)) stop("Only numeric vectors are accepted.")
+  #   vSet = unique(v)
+  #   if (!missing(naVal)) vSet[vSet == naVal] = NA
+  #   vSet = vSet[!is.na(vSet)]
+  #
+  #   !(any(as.integer(vSet) != vSet) || length(vSet) > 2)
+  # }
 
 
   # checks whether user difference score is based on means or medians
@@ -188,10 +205,14 @@ splith <- function(data, outcome = "RT", average = "mean",q = .80, permutations 
     setTxtProgressBar(pb, 0)
 
     for(i in plist){
+
       tempcm.1 <- list()
       tempcm.2 <- list()
-      tempim.1 <- list()
-      tempim.2 <- list()
+
+      if (type == "difference") {
+        tempim.1 <- list()
+        tempim.2 <- list()
+      }
 
       for(k in blist){
 
@@ -213,41 +234,57 @@ splith <- function(data, outcome = "RT", average = "mean",q = .80, permutations 
           tempcm.2[[k]] <- tempcm[(floor(midtrial.con) + 1):length(tempcvb), ]
         }
 
+        if (type == "difference") {
+          tempivb   <-
+            subset(data[, outcome],
+                   data[, subject] == i &
+                     data[, block] == k &
+                     data[, condition] == j &
+                     data[, variable] == vlist[2])
 
-        tempivb   <-
-          subset(data[, outcome],
-                 data[, subject] == i &
-                   data[, block] == k &
-                   data[, condition] == j &
-                   data[, variable] == vlist[2])
+          if (length(tempivb) != 0){
+            midtrial.incon <- sum(!is.na(tempivb)) / 2
 
-        if (length(tempivb) != 0){
-          midtrial.incon <- sum(!is.na(tempivb)) / 2
+            tempim <- samploop(a = matrix(nrow = length(tempivb), ncol = permutations, 0),
+                               b = tempivb)
 
-          tempim <- samploop(a = matrix(nrow = length(tempivb), ncol = permutations, 0),
-                             b = tempivb)
-
-          tempim.1[[k]] <- tempim[1:floor(midtrial.incon), ]
-          tempim.2[[k]] <- tempim[(floor(midtrial.incon) + 1):length(tempivb), ]
-
+            tempim.1[[k]] <- tempim[1:floor(midtrial.incon), ]
+            tempim.2[[k]] <- tempim[(floor(midtrial.incon) + 1):length(tempivb), ]
+            }
+          }
         }
-      }
 
       tempcm.1 <- do.call(rbind, tempcm.1)
       tempcm.2 <- do.call(rbind, tempcm.2)
-      tempim.1 <- do.call(rbind, tempim.1)
-      tempim.2 <- do.call(rbind, tempim.2)
+      if (type == "difference") {
+        tempim.1 <- do.call(rbind, tempim.1)
+        tempim.2 <- do.call(rbind, tempim.2)
+      }
 
-      if (average %in% c("mean", "median")) {
-        bias1v[l:(l + permutations - 1)] <-
-          ave_fun(tempcm.1)  - ave_fun(tempim.1)
-        bias2v[l:(l + permutations - 1)] <-
-          ave_fun(tempcm.2)  - ave_fun(tempim.2)
+      if (type == "difference") {
+        if (average %in% c("mean", "median")) {
+          bias1v[l:(l + permutations - 1)] <-
+            ave_fun(tempcm.1)  - ave_fun(tempim.1)
+          bias2v[l:(l + permutations - 1)] <-
+            ave_fun(tempcm.2)  - ave_fun(tempim.2)
+        } else {
+          bias1v[l:(l + permutations - 1)] <-
+            ave_fun(tempcm.1, q)  - ave_fun(tempim.1, q)
+          bias2v[l:(l + permutations - 1)] <-
+            ave_fun(tempcm.2, q)  - ave_fun(tempim.2, q)
+        }
       } else {
-        bias1v[l:(l + permutations - 1)] <-
-          ave_fun(tempcm.1, q)  - ave_fun(tempim.1, q)
-        bias2v[l:(l + permutations - 1)] <-
-          ave_fun(tempcm.2, q)  - ave_fun(tempim.2, q)
+        if (average %in% c("mean", "median")) {
+          bias1v[l:(l + permutations - 1)] <-
+            ave_fun(tempcm.1)
+          bias2v[l:(l + permutations - 1)] <-
+            ave_fun(tempcm.2)
+        } else {
+          bias1v[l:(l + permutations - 1)] <-
+            ave_fun(tempcm.1, q)
+          bias2v[l:(l + permutations - 1)] <-
+            ave_fun(tempcm.2, q)
+        }
       }
 
 

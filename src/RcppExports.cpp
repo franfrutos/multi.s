@@ -12,20 +12,19 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 
 // samploop
 Rcpp::NumericMatrix samploop(Rcpp::NumericMatrix a, Rcpp::NumericVector b);
-RcppExport SEXP _multi_s_samploop(SEXP aSEXP, SEXP bSEXP, SEXP cSEXP) {
+RcppExport SEXP _multi_s_samploop(SEXP aSEXP, SEXP bSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type a(aSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type b(bSEXP);
-    Rcpp::traits::input_parameter< int >::type c(cSEXP);
     rcpp_result_gen = Rcpp::wrap(samploop(a, b));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_multi_s_samploop", (DL_FUNC) &_multi_s_samploop, 3},
+    {"_multi_s_samploop", (DL_FUNC) &_multi_s_samploop, 2},
     {NULL, NULL, 0}
 };
 

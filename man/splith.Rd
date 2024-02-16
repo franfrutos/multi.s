@@ -8,6 +8,8 @@ splith(
   data,
   outcome = "RT",
   average = "mean",
+  type = "difference",
+  q = 0.8,
   permutations = 10,
   variable = NULL,
   condition = NULL,
@@ -22,15 +24,19 @@ splith(
 
 \item{outcome}{The name of your outcome variable in strings. The default is "RT".}
 
-\item{average}{The type of averaging that you want to apply for computing split-half.The default is "mean".}
+\item{average}{The type of averaging that you want to apply for computing split-half. The default is "mean".}
 
-\item{permutations}{Number of times that you want to compute the split-half.Default is 10, but more is recommended.}
+\item{type}{The type of score that will be applied. Default is "difference".}
 
-\item{variable}{Name of the variable to be analyzed in strings (e.g. "Congruency").Default is set to NULL, and is required to be filled.}
+\item{q}{Quantile to apply if mean or median is not used as averaging method. Default is .80.}
 
-\item{condition}{A variable's name containing different conditions for splitting analysis.This argument is optional.}
+\item{permutations}{Number of times that you want to compute the split-half. Default is 10, but more is recommended.}
 
-\item{subject}{A variable's name for subject's indentification.The default is "subject".}
+\item{variable}{Name of the variable to be analyzed in strings (e.g. "Congruency"). Default is set to NULL, and is required to be filled.}
+
+\item{condition}{A variable's name containing different conditions for splitting analysis. This argument is optional.}
+
+\item{subject}{A variable's name for subject's indentification. The default is "subject".}
 
 \item{include_block}{A logical that determine if each half computed should apply constrains depending on blocking. If TRUE, split-half will be computed splitting by block. Default is FALSE.}
 
