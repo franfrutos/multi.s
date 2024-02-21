@@ -87,6 +87,10 @@ splith <- function(data, outcome = "RT", average = "mean", type = "difference", 
     data$condition <- rep(1, each = nrow(data))
   }
 
+  check_type <- function(x) return(grepl("difference", x, fixed = TRUE))
+
+  if (length(clist) != 2 & type == "difference_of_difference") stop('If type is set to "difference_of_difference" a condition with 2 levels is needed.')
+
   #create a vector for Blocks
   if (include_block){
     if(is.null(block)) {
@@ -105,10 +109,10 @@ splith <- function(data, outcome = "RT", average = "mean", type = "difference", 
     if (!length(unique(data[, variable])) %in% 1:2){
       stop("your variable needs one or two values values")
     } else if (length(unique(data[, variable])) == 2) {
-      if (type != "difference") stop('If your variable has two values, "type" must be set to difference.')
+      if (!check_type(type)) stop('If your variable has two values, "type" must be set to difference.')
       vlist <- sort(unique(data[, variable]))
     } else {
-      if (type == "difference") stop('A difference cannot be computed if there is only one level in "variable".')
+      if (check_type(type)) stop('A difference cannot be computed if there is only one level in "variable".')
       vlist <- 1
       variable <- "variable"
       data$variable <- rep(1, each = nrow(data))    }
@@ -209,7 +213,7 @@ splith <- function(data, outcome = "RT", average = "mean", type = "difference", 
       tempcm.1 <- list()
       tempcm.2 <- list()
 
-      if (type == "difference") {
+      if (check_type(type)) {
         tempim.1 <- list()
         tempim.2 <- list()
       }
@@ -234,7 +238,7 @@ splith <- function(data, outcome = "RT", average = "mean", type = "difference", 
           tempcm.2[[k]] <- tempcm[(floor(midtrial.con) + 1):length(tempcvb), ]
         }
 
-        if (type == "difference") {
+        if (check_type(type)) {
           tempivb   <-
             subset(data[, outcome],
                    data[, subject] == i &
@@ -256,12 +260,12 @@ splith <- function(data, outcome = "RT", average = "mean", type = "difference", 
 
       tempcm.1 <- do.call(rbind, tempcm.1)
       tempcm.2 <- do.call(rbind, tempcm.2)
-      if (type == "difference") {
+      if (check_type(type)) {
         tempim.1 <- do.call(rbind, tempim.1)
         tempim.2 <- do.call(rbind, tempim.2)
       }
 
-      if (type == "difference") {
+      if (check_type(type)) {
         if (average %in% c("mean", "median")) {
           bias1v[l:(l + permutations - 1)] <-
             ave_fun(tempcm.1)  - ave_fun(tempim.1)
@@ -325,31 +329,71 @@ splith <- function(data, outcome = "RT", average = "mean", type = "difference", 
   findata2 <-  na.omit(findata)
   findata2$Iteration <- as.factor(findata2$Iteration)
 
-  out <- findata2 %>%
-    dplyr::group_by(Condition, Iteration) %>%
-    dplyr::summarise(
-      n = round(sum(!is.na(bias1)), 2),
-      splithalf = cor(bias1, bias2, use = "pairwise.complete"),
-      spearmanbrown = (2 * cor(bias1, bias2,
-                               use = "pairwise.complete")) /
-        (1 + (2 - 1) * abs(
-          cor(bias1, bias2,
-              use = "pairwise.complete")
-        ))
-    )
-  round.to = 2
-  out2 <- out %>%
-    dplyr::group_by(Condition) %>%
-    dplyr::summarise(
-      n = mean(n),
-      splithalf_estimate = round(mean(splithalf), round.to),
-      splithalf95CI_lower = round(quantile(splithalf, c(.025), names = F), round.to),
-      splithalf95CI_upper = round(quantile(splithalf, c(.975), names = F), round.to),
-      spearmanbrown_estimate = round(mean(spearmanbrown), round.to),
-      spearmanbrown95CI_lower = round(quantile(spearmanbrown, c(.025), names = F), round.to),
-      spearmanbrown95CI_upper = round(quantile(spearmanbrown, c(.975), names = F), round.to)
-    ) %>%
-    as.data.frame()
+  if (type != "difference_of_difference") {
+    out <- findata2 %>%
+      dplyr::group_by(Condition, Iteration) %>%
+      dplyr::summarise(
+        n = round(sum(!is.na(bias1)), 2),
+        splithalf = cor(bias1, bias2, use = "pairwise.complete"),
+        spearmanbrown = (2 * cor(bias1, bias2,
+                                 use = "pairwise.complete")) /
+          (1 + (2 - 1) * abs(
+            cor(bias1, bias2,
+                use = "pairwise.complete")
+          ))
+      )
+    round.to = 2
+    out2 <- out %>%
+      dplyr::group_by(Condition) %>%
+      dplyr::summarise(
+        n = mean(n),
+        splithalf_estimate = round(mean(splithalf), round.to),
+        splithalf95CI_lower = round(quantile(splithalf, c(.025), names = F), round.to),
+        splithalf95CI_upper = round(quantile(splithalf, c(.975), names = F), round.to),
+        spearmanbrown_estimate = round(mean(spearmanbrown), round.to),
+        spearmanbrown95CI_lower = round(quantile(spearmanbrown, c(.025), names = F), round.to),
+        spearmanbrown95CI_upper = round(quantile(spearmanbrown, c(.975), names = F), round.to)
+      ) %>%
+      as.data.frame()
+  } else {
+    out <- findata2 %>%
+      tidyr::gather(key = "bias", value = "value", 4:5) %>%
+      tidyr::unite(variable, Condition, bias, sep = "_") %>%
+      tidyr::spread(variable, value) %>%
+      dplyr::mutate(
+        difference1_1 = .[[5]] - .[[3]],
+        difference1_2 = .[[6]] - .[[4]],
+        difference2_1 = .[[5]] - .[[4]],
+        difference2_2 = .[[6]] - .[[3]]
+      ) %>%
+      dplyr::group_by(Iteration) %>%
+      dplyr::summarise(
+        cor1 = cor(difference1_1, difference1_2, use = "pairwise.complete"),
+        cor2 = cor(difference2_1, difference2_2, use = "pairwise.complete"),
+        n = dplyr::n()
+      ) %>%
+      tidyr::gather("var", "splithalf", 2:3) %>%
+      dplyr::mutate(spearmanbrown = (2 * splithalf) / ((1 + (2 - 1) * abs(splithalf)))) %>%
+      dplyr::mutate(condition = "difference_of_difference score")
+
+
+    # take the mean estimates per condition
+    round.to = 2
+    out2 <- out %>%
+      dplyr::summarise(
+        n = mean(n),
+        splithalf_estimate = round(mean(splithalf), round.to),
+        splithalf95CI_lower = round(quantile(splithalf, c(.025), names = F), round.to),
+        splithalf95CI_upper = round(quantile(splithalf, c(.975), names = F), round.to),
+        spearmanbrown_estimate = round(mean(spearmanbrown), round.to),
+        spearmanbrown95CI_lower = round(quantile(spearmanbrown, c(.025), names = F), round.to),
+        spearmanbrown95CI_upper = round(quantile(spearmanbrown, c(.975), names = F), round.to)
+      ) %>%
+      as.data.frame()
+
+    out2 <- cbind(condition = "difference_of_difference score", out2)
+  }
+
 
   colnames(out2) <- c(
     "Condition",

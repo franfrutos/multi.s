@@ -6,15 +6,10 @@
 <!-- badges: start -->
 <!-- badges: end -->
 
-multi.s is an upcoming package motivated for personal use. It is a
-wrapped around Daniel Parson’s package, which can be found in this
-github repository: <https://github.com/sdparsons/splithalf>.
-
-Now, the package only have a function to compute the split-half of the
-difference in RT data. This function is expected to be improved with
-more possibilities: analysis of accuracy, apply specifications on raw
-data before computing split-half, tools for visualize and report
-results, and, of course, speeded multiverse analisys.
+multi.s is a package motivated for personal use. It is a wrapped around
+Daniel Parson’s package, which can be found in this github repository:
+<https://github.com/sdparsons/splithalf>. It allows to calculate
+split-half reliability using random splits.
 
 ## Installation
 
