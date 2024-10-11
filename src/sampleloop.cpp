@@ -13,7 +13,7 @@ Rcpp::NumericMatrix samploop(Rcpp::NumericMatrix a, Rcpp::NumericVector b) {
   int ac = a.ncol();
 
   for (int j = 0; j<ac; j++){
-    std::random_shuffle(b.begin(), b.end(), randWrapper);
+    std::shuffle(b.begin(), b.end(), randWrapper);
     for (int i = 0; i<ar; i++){
       a(i, j) = b[i];
     }
