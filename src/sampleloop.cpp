@@ -1,8 +1,8 @@
 #include <Rcpp.h>
+#include <random>  // Include the random library
 
-// wrapper around Rs RNG such that we get a uniform distribution over
-// [0,n) as required by the STL algorithm
-inline int randWrapper(const int n) { return floor(unif_rand()*n); }
+std::random_device rd;   // Initialize a random device
+std::mt19937 g(rd());    // Use Mersenne Twister random number generator
 
 // @export
 // [[Rcpp::export]]
@@ -13,7 +13,7 @@ Rcpp::NumericMatrix samploop(Rcpp::NumericMatrix a, Rcpp::NumericVector b) {
   int ac = a.ncol();
 
   for (int j = 0; j<ac; j++){
-    std::shuffle(b.begin(), b.end(), randWrapper);
+    std::shuffle(b.begin(), b.end(), g);
     for (int i = 0; i<ar; i++){
       a(i, j) = b[i];
     }
